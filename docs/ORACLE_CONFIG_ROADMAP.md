@@ -63,20 +63,20 @@ Create `.env` in the oracle app directory (e.g. `apps/<oracle-name>/.env`):
 
 ```env
 # =================================================================
-# Oracle Environment Configuration
+# Oracle Environment Configuration Template (.env)
 # =================================================================
 
 # --- Runtime & Server ---
 NODE_ENV=development
 PORT=4000
-ORACLE_NAME=ZynGo-Oracle-1
+ORACLE_NAME=<YOUR_ORACLE_NAME>
 NETWORK=testnet
 CORS_ORIGIN=*
 
 # --- Oracle Blockchain Identity ---
-ORACLE_DID=did:ixo:ixo19qkfwyyxny99qvjvh67n5ctal36uj5gnkfr2c0
-ORACLE_ENTITY_DID=did:ixo:entity:45081e35a80585abbea0538336c86b53
-SECP_MNEMONIC=elbow mansion rifle whip double report high lava seat proof smooth float
+ORACLE_DID=<YOUR_ORACLE_DID>
+ORACLE_ENTITY_DID=<YOUR_ORACLE_ENTITY_DID>
+SECP_MNEMONIC=<YOUR_ORACLE_MNEMONIC_PHRASE>
 
 # --- IXO Chain & Blocksync RPC ---
 BLOCKSYNC_GRAPHQL_URL=https://testnet-blocksync-graphql.ixo.earth/graphql
@@ -84,12 +84,12 @@ RPC_URL=https://testnet.ixo.earth/rpc/
 
 # --- Matrix Server ---
 MATRIX_BASE_URL=https://testmx.ixo.earth
-MATRIX_ORACLE_ADMIN_USER_ID=@did-ixo-ixo19qkfwyyxny99qvjvh67n5ctal36uj5gnkfr2c0:testmx.ixo.earth
-MATRIX_ORACLE_ADMIN_PASSWORD=<PASSWORD>
-MATRIX_ORACLE_ADMIN_ACCESS_TOKEN=<ACCESS_TOKEN>
-MATRIX_RECOVERY_PHRASE=<SSSS_PASSPHRASE>
-MATRIX_ACCOUNT_ROOM_ID=!jKgaWiDcnkBswqLMKC:testmx.ixo.earth
-MATRIX_VALUE_PIN=235790
+MATRIX_ORACLE_ADMIN_USER_ID=<YOUR_MATRIX_ADMIN_USER_ID>
+MATRIX_ORACLE_ADMIN_PASSWORD=<YOUR_MATRIX_ADMIN_PASSWORD>
+MATRIX_ORACLE_ADMIN_ACCESS_TOKEN=<YOUR_MATRIX_ADMIN_ACCESS_TOKEN>
+MATRIX_RECOVERY_PHRASE=<YOUR_SSSS_PASSPHRASE>
+MATRIX_ACCOUNT_ROOM_ID=<YOUR_MATRIX_ACCOUNT_ROOM_ID>
+MATRIX_VALUE_PIN=<YOUR_MATRIX_PIN>
 MATRIX_STORE_PATH=./matrix-storage
 
 # --- Local Storage ---
@@ -97,11 +97,11 @@ SQLITE_DATABASE_PATH=./.data/sqlite
 
 # --- LLM Provider ---
 LLM_PROVIDER=openrouter
-OPEN_ROUTER_API_KEY=sk-or-v1-...
+OPEN_ROUTER_API_KEY=<YOUR_OPENROUTER_API_KEY>
 DEFAULT_MODEL=openrouter/free
 
 # --- Custom Domain Variables ---
-ZYNGO_API_URL=https://api.yoma.world
+DOMAIN_API_URL=<YOUR_DOMAIN_API_ENDPOINT>
 ```
 
 ---
