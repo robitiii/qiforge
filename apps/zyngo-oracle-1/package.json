@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/main.ts",
+    "chat": "tsx src/chat-cli.ts",
     "start": "node dist/main.js",
     "start:mem": "node --max-old-space-size=1536 --heapsnapshot-near-heap-limit=3 --heapsnapshot-signal=SIGUSR2 --inspect=9229 dist/main.js",
     "build": "tsc -p tsconfig.build.json",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@ixo/oracle-runtime": "workspace:*",
+    "@ixo/ucan": "workspace:*",
     "@nestjs/common": "^11.1.19",
     "dotenv": "^16.4.7",
     "ioredis": "^5.6.1",
