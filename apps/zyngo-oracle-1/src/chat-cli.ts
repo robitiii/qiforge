@@ -1,8 +1,17 @@
 import 'dotenv/config';
-import { createInvocation, generateKeypair, serializeInvocation } from '@ixo/ucan';
+import {
+  createInvocation,
+  serializeInvocation,
+  signerFromMnemonic,
+  type SupportedDID,
+} from '@ixo/ucan';
 
 const API_URL = process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}`;
-const ORACLE_DID = process.env.ORACLE_DID;
+const ORACLE_DID = process.env.ORACLE_DID as SupportedDID | undefined;
+const MNEMONIC =
+  process.env.TEST_USER_MNEMONIC ??
+  process.env.SECP_MNEMONIC ??
+  'elbow mansion rifle whip double report high lava seat proof smooth float';
 
 if (!ORACLE_DID) {
   console.error('Missing ORACLE_DID in .env');
@@ -10,8 +19,7 @@ if (!ORACLE_DID) {
 }
 
 async function getAuthToken(): Promise<string> {
-  // Generate valid ephemeral Ed25519 UCAN signer
-  const { signer } = await generateKeypair();
+  const { signer } = await signerFromMnemonic(MNEMONIC, ORACLE_DID);
   const now = Math.floor(Date.now() / 1000);
   const invocation = await createInvocation({
     issuer: signer,
