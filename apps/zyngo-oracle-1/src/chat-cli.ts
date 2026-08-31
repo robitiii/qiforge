@@ -40,6 +40,7 @@ async function main() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        'X-Auth-Type': 'ucan',
       },
       body: JSON.stringify({ title: 'Terminal Chat Session' }),
     });
@@ -60,6 +61,7 @@ async function main() {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
         Authorization: `Bearer ${token}`,
+        'X-Auth-Type': 'ucan',
       },
       body: JSON.stringify({
         sessionId,
