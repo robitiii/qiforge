@@ -5,11 +5,11 @@ import {
   serializeDelegation,
   serializeInvocation,
   signerFromMnemonic,
-  type SupportedDID,
+  type Capability,
 } from '@ixo/ucan';
 
 const API_URL = (process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}`).replace(/\/$/, '');
-const ORACLE_DID = process.env.ORACLE_DID as SupportedDID | undefined;
+const ORACLE_DID = process.env.ORACLE_DID;
 const MNEMONIC =
   process.env.TEST_USER_MNEMONIC ??
   process.env.SECP_MNEMONIC ??
@@ -20,12 +20,12 @@ if (!ORACLE_DID) {
   process.exit(1);
 }
 
-const AUTH_CAPABILITY = {
+const AUTH_CAPABILITY: Capability = {
   can: '*',
   with: 'ixo:oracle',
 };
 
-const ALL_CAPABILITIES = [
+const ALL_CAPABILITIES: Capability[] = [
   { can: 'memory/*', with: 'ixo:memory' },
   { can: 'sandbox/*', with: 'ixo:sandbox' },
   { can: 'skills/*', with: 'ixo:skills' },
@@ -97,10 +97,13 @@ async function main() {
 
     const sessionData = (await sessionRes.json()) as { id?: string; sessionId?: string };
     const sessionId = sessionData.sessionId ?? sessionData.id;
+    if (!sessionId) {
+      throw new Error('No sessionId returned from /sessions');
+    }
     console.log(`\x1b[90m[Session ID: ${sessionId}]\x1b[0m\n\x1b[32mAgent Response:\x1b[0m `);
 
-    // 2. Stream Chat Message
-    const msgRes = await fetch(`${API_URL}/messages`, {
+    // 2. Stream Chat Message to POST /messages/:sessionId
+    const msgRes = await fetch(`${API_URL}/messages/${encodeURIComponent(sessionId)}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -108,8 +111,9 @@ async function main() {
         ...authHeaders,
       },
       body: JSON.stringify({
-        sessionId,
-        content: messageText,
+        message: messageText,
+        stream: true,
+        timezone: 'UTC',
       }),
     });
 
@@ -140,8 +144,10 @@ async function main() {
               process.stdout.write(event.content);
             } else if (event.type === 'token' && event.token) {
               process.stdout.write(event.token);
-            } else if (event.type === 'message' && event.data?.content) {
-              process.stdout.write(event.data.content);
+            } else if (event.type === 'chunk' && event.data) {
+              process.stdout.write(event.data);
+            } else if (event.message?.content) {
+              process.stdout.write(event.message.content);
             }
           } catch {
             process.stdout.write(raw);
