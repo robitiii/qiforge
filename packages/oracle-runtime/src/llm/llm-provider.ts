@@ -101,9 +101,9 @@ function resolveMainReasoningEffort(): 'low' | 'medium' | 'high' {
 export function getModelForRole(role: ProviderModelRole | string): string {
   const provider = getLLMProvider();
   const map = MODEL_MAP[provider];
-  // The `main` model is deployment-configurable via DEFAULT_MODEL. Only
-  // OpenRouter participates in model selection today; Nebius keeps its fixed
-  // role map so its self-hosted deployments are unaffected.
+  if (provider === 'openrouter' && process.env.DEFAULT_MODEL) {
+    return process.env.DEFAULT_MODEL;
+  }
   if (role === 'main' && provider === 'openrouter') {
     return getDefaultModelId();
   }
@@ -132,9 +132,9 @@ export const getProviderChatModel = (
   );
 
   if (provider === 'openrouter') {
-    // For 'main' role, add fallback models sorted by latency
+    // For 'main' role without custom DEFAULT_MODEL, add fallback models sorted by latency
     const fallbackKwargs: Record<string, unknown> =
-      role === 'main'
+      role === 'main' && !process.env.DEFAULT_MODEL
         ? {
             models: OPENROUTER_MAIN_FALLBACKS,
             provider: { sort: 'latency' },

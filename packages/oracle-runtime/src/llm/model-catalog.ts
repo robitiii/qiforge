@@ -236,7 +236,10 @@ export function getCatalogEntry(id: string): ModelCatalogEntry | undefined {
  * the default model.
  */
 export function isAllowedModel(id: string | undefined | null): id is string {
-  return typeof id === 'string' && catalogById.has(id);
+  return (
+    typeof id === 'string' &&
+    (catalogById.has(id) || id.includes(':free') || id === process.env.DEFAULT_MODEL)
+  );
 }
 
 /**

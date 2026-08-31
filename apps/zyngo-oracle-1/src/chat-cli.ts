@@ -125,6 +125,8 @@ async function main() {
     const reader = msgRes.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let currentEvent = '';
+    let currentData = '';
 
     while (true) {
       const { done, value } = await reader.read();
@@ -135,28 +137,40 @@ async function main() {
       buffer = lines.pop() ?? '';
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const event = JSON.parse(raw);
-            if (event.content) {
-              process.stdout.write(event.content);
-            } else if (event.type === 'token' && event.token) {
-              process.stdout.write(event.token);
-            } else if (event.type === 'chunk' && event.data) {
-              process.stdout.write(event.data);
-            } else if (event.message?.content) {
-              process.stdout.write(event.message.content);
+        const trimmed = line.trim();
+        if (trimmed === '' || trimmed.startsWith(':')) {
+          if (currentEvent && currentData) {
+            try {
+              const parsed = JSON.parse(currentData);
+              if (currentEvent === 'message' && parsed.content) {
+                process.stdout.write(parsed.content);
+              } else if (currentEvent === 'tool_call') {
+                if (parsed.status === 'isRunning') {
+                  process.stdout.write(`\n\x1b[90m[Calling tool: ${parsed.toolName}...]\x1b[0m\n`);
+                } else if (parsed.status === 'done') {
+                  process.stdout.write(`\x1b[90m[Tool ${parsed.toolName} done]\x1b[0m\n`);
+                }
+              } else if (currentEvent === 'error') {
+                process.stdout.write(`\n\x1b[31m[Error: ${parsed.error || currentData}]\x1b[0m\n`);
+              }
+            } catch {
+              // Ignore partial JSON
             }
-          } catch {
-            process.stdout.write(raw);
+            currentEvent = '';
+            currentData = '';
           }
+          continue;
+        }
+
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim();
+        } else if (trimmed.startsWith('data:')) {
+          currentData = trimmed.slice(5).trim();
         }
       }
     }
 
-    console.log('\n\n\x1b[90m--- End of stream ---\x1b[0m\n');
+    console.log('\n\n\x1b[90m--- End of response ---\x1b[0m\n');
   } catch (error) {
     console.error('\n\x1b[31mChat error:\x1b[0m', error);
   }
