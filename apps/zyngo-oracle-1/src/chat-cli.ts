@@ -21,11 +21,12 @@ if (!ORACLE_DID) {
 async function getAuthToken(): Promise<string> {
   const { signer } = await signerFromMnemonic(MNEMONIC, ORACLE_DID);
   const now = Math.floor(Date.now() / 1000);
+  // Use 600s (10 min) TTL to comfortably stay under 900s server maximum
   const invocation = await createInvocation({
     issuer: signer,
     audience: ORACLE_DID!,
     capability: { can: '*', with: 'ixo:oracle' },
-    expiration: now + 900,
+    expiration: now + 600,
   });
 
   return serializeInvocation(invocation);
@@ -58,8 +59,8 @@ async function main() {
       throw new Error(`Failed to create session (${sessionRes.status}): ${err}`);
     }
 
-    const sessionData = (await sessionRes.json()) as { id: string };
-    const sessionId = sessionData.id;
+    const sessionData = (await sessionRes.json()) as { id?: string; sessionId?: string };
+    const sessionId = sessionData.sessionId ?? sessionData.id;
     console.log(`\x1b[90m[Session ID: ${sessionId}]\x1b[0m\n\x1b[32mAgent Response:\x1b[0m `);
 
     // 2. Stream Chat Message
@@ -104,6 +105,8 @@ async function main() {
               process.stdout.write(event.content);
             } else if (event.type === 'token' && event.token) {
               process.stdout.write(event.token);
+            } else if (event.type === 'message' && event.data?.content) {
+              process.stdout.write(event.data.content);
             }
           } catch {
             process.stdout.write(raw);
