@@ -1,13 +1,15 @@
 import 'dotenv/config';
 import {
+  createDelegation,
   createInvocation,
+  serializeDelegation,
   serializeInvocation,
   signerFromMnemonic,
-  type SupportedDID,
+  type Capability,
 } from '@ixo/ucan';
 
-const API_URL = process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}`;
-const ORACLE_DID = process.env.ORACLE_DID as SupportedDID | undefined;
+const API_URL = (process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}`).replace(/\/$/, '');
+const ORACLE_DID = process.env.ORACLE_DID;
 const MNEMONIC =
   process.env.TEST_USER_MNEMONIC ??
   process.env.SECP_MNEMONIC ??
@@ -18,18 +20,49 @@ if (!ORACLE_DID) {
   process.exit(1);
 }
 
-async function getAuthToken(): Promise<string> {
-  const { signer } = await signerFromMnemonic(MNEMONIC, ORACLE_DID);
+const AUTH_CAPABILITY: Capability = {
+  can: '*',
+  with: 'ixo:oracle',
+};
+
+const ALL_CAPABILITIES: Capability[] = [
+  { can: 'memory/*', with: 'ixo:memory' },
+  { can: 'sandbox/*', with: 'ixo:sandbox' },
+  { can: 'skills/*', with: 'ixo:skills' },
+  { can: 'subscriptions/read', with: 'ixo:subscriptions' },
+];
+
+async function mintAuthHeaders() {
+  const { signer, did: userDid } = await signerFromMnemonic(MNEMONIC);
   const now = Math.floor(Date.now() / 1000);
-  // Use 600s (10 min) TTL to comfortably stay under 900s server maximum
+
+  // 1. Invocation (Auth Token)
   const invocation = await createInvocation({
     issuer: signer,
     audience: ORACLE_DID!,
-    capability: { can: '*', with: 'ixo:oracle' },
-    expiration: now + 600,
+    capability: AUTH_CAPABILITY,
+    proofs: [],
+    expiration: now + 300,
   });
+  const invocationToken = await serializeInvocation(invocation);
 
-  return serializeInvocation(invocation);
+  // 2. Delegation (Capabilities)
+  const delegation = await createDelegation({
+    issuer: signer,
+    audience: ORACLE_DID!,
+    capabilities: ALL_CAPABILITIES,
+    expiration: now + 7 * 24 * 60 * 60,
+  });
+  const delegationToken = await serializeDelegation(delegation);
+
+  return {
+    userDid,
+    headers: {
+      Authorization: `Bearer ${invocationToken}`,
+      'X-Auth-Type': 'ucan',
+      'x-ucan-delegation': delegationToken,
+    },
+  };
 }
 
 async function main() {
@@ -41,17 +74,20 @@ async function main() {
   console.log(`\x1b[33mUser Prompt:\x1b[0m "${messageText}"\n`);
 
   try {
-    const token = await getAuthToken();
+    const { userDid, headers: authHeaders } = await mintAuthHeaders();
+    console.log(`\x1b[90m[User DID: ${userDid}]\x1b[0m`);
 
     // 1. Create Session
     const sessionRes = await fetch(`${API_URL}/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'X-Auth-Type': 'ucan',
+        ...authHeaders,
       },
-      body: JSON.stringify({ title: 'Terminal Chat Session' }),
+      body: JSON.stringify({
+        title: 'Terminal Chat Session',
+        homeServer: 'testmx.ixo.earth',
+      }),
     });
 
     if (!sessionRes.ok) {
@@ -69,8 +105,7 @@ async function main() {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
-        Authorization: `Bearer ${token}`,
-        'X-Auth-Type': 'ucan',
+        ...authHeaders,
       },
       body: JSON.stringify({
         sessionId,
