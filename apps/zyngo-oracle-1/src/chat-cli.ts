@@ -32,6 +32,29 @@ const ALL_CAPABILITIES: Capability[] = [
   { can: 'subscriptions/read', with: 'ixo:subscriptions' },
 ];
 
+async function ensureRoomAlias(userDid: string) {
+  const token = process.env.MATRIX_ORACLE_ADMIN_ACCESS_TOKEN;
+  const baseUrl = process.env.MATRIX_BASE_URL || 'https://testmx.ixo.earth';
+  const roomId = process.env.MATRIX_ACCOUNT_ROOM_ID;
+  const oracleEntityDid = process.env.ORACLE_ENTITY_DID;
+
+  if (!token || !roomId || !oracleEntityDid) return;
+
+  const alias = `#${userDid.replace(/:/g, '-')}_${oracleEntityDid.replace(/:/g, '-')}:testmx.ixo.earth`;
+  try {
+    await fetch(`${baseUrl}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ room_id: roomId }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 async function mintAuthHeaders() {
   const { signer, did: userDid } = await signerFromMnemonic(MNEMONIC);
   const now = Math.floor(Date.now() / 1000);
@@ -76,6 +99,9 @@ async function main() {
   try {
     const { userDid, headers: authHeaders } = await mintAuthHeaders();
     console.log(`\x1b[90m[User DID: ${userDid}]\x1b[0m`);
+
+    // Ensure Matrix alias exists for this user + oracle entity
+    await ensureRoomAlias(userDid);
 
     // 1. Create Session
     const sessionRes = await fetch(`${API_URL}/sessions`, {
