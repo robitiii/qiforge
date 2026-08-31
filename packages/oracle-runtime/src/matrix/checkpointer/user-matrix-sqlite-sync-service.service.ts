@@ -106,8 +106,7 @@ const EVICTION_GRACE_MS = 60_000;
 
 @Injectable()
 export class UserMatrixSqliteSyncService
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private static instance: UserMatrixSqliteSyncService | undefined;
 
   readonly fileEventsDatabase: DatabaseType;
@@ -442,8 +441,7 @@ export class UserMatrixSqliteSyncService
       } catch (error) {
         // Busy connection — leave it cached and try a different one.
         Logger.warn(
-          `Failed to evict database connection for user ${userDid}: ${
-            error instanceof Error ? error.message : String(error)
+          `Failed to evict database connection for user ${userDid}: ${error instanceof Error ? error.message : String(error)
           }`,
         );
         continue;
@@ -474,8 +472,7 @@ export class UserMatrixSqliteSyncService
         entry.db.close();
       } catch (error) {
         Logger.warn(
-          `Failed to close database connection for user ${userDid} during shutdown: ${
-            error instanceof Error ? error.message : String(error)
+          `Failed to close database connection for user ${userDid} during shutdown: ${error instanceof Error ? error.message : String(error)
           }`,
         );
       }
@@ -486,8 +483,7 @@ export class UserMatrixSqliteSyncService
       this.fileEventsDatabase.close();
     } catch (error) {
       Logger.warn(
-        `Failed to close file events database during shutdown: ${
-          error instanceof Error ? error.message : String(error)
+        `Failed to close file events database during shutdown: ${error instanceof Error ? error.message : String(error)
         }`,
       );
     }
@@ -1263,14 +1259,14 @@ export class UserMatrixSqliteSyncService
             `Failed to upload checkpoint to Matrix storage for user ${userDid}`,
             error instanceof Error ? error.message : String(error),
             'File path: ' +
-              UserMatrixSqliteSyncService.getUserCheckpointDbPath(userDid),
+            UserMatrixSqliteSyncService.getUserCheckpointDbPath(userDid),
             'File Size before gzip: ' +
-              (await fs
-                .stat(
-                  UserMatrixSqliteSyncService.getUserCheckpointDbPath(userDid),
-                )
-                .then((stats) => bytesToHumanReadable(stats.size))
-                .catch(() => 'unknown')),
+            (await fs
+              .stat(
+                UserMatrixSqliteSyncService.getUserCheckpointDbPath(userDid),
+              )
+              .then((stats) => bytesToHumanReadable(stats.size))
+              .catch(() => 'unknown')),
           );
         }
       }
