@@ -207,9 +207,10 @@ export class UserMatrixSqliteSyncService
   }
 
   static getUserCheckpointDbPath(userDid: string): string {
+    const safeUserFolder = userDid.replace(/[:\\/*?"<>|]/g, '_');
     const dbPath = path.join(
       UserMatrixSqliteSyncService.checkpointsFolder,
-      userDid,
+      safeUserFolder,
       `${UserMatrixSqliteSyncService.createUserStorageKey(userDid)}.db`,
     );
     return dbPath;

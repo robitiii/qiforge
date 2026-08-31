@@ -5,11 +5,11 @@ import {
   serializeDelegation,
   serializeInvocation,
   signerFromMnemonic,
-  type Capability,
+  type SupportedDID,
 } from '@ixo/ucan';
 
 const API_URL = (process.env.API_URL ?? `http://localhost:${process.env.PORT ?? 4000}`).replace(/\/$/, '');
-const ORACLE_DID = process.env.ORACLE_DID;
+const ORACLE_DID = process.env.ORACLE_DID as SupportedDID | undefined;
 const MNEMONIC =
   process.env.TEST_USER_MNEMONIC ??
   process.env.SECP_MNEMONIC ??
@@ -20,12 +20,12 @@ if (!ORACLE_DID) {
   process.exit(1);
 }
 
-const AUTH_CAPABILITY: Capability = {
+const AUTH_CAPABILITY = {
   can: '*',
   with: 'ixo:oracle',
 };
 
-const ALL_CAPABILITIES: Capability[] = [
+const ALL_CAPABILITIES = [
   { can: 'memory/*', with: 'ixo:memory' },
   { can: 'sandbox/*', with: 'ixo:sandbox' },
   { can: 'skills/*', with: 'ixo:skills' },
